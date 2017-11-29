@@ -1,34 +1,69 @@
 #graph topology design
 
 class node:
-    neighbor=set()
-    name=''
-    prevNode=None
-    nextNode=None
+
+
     def __init__(self,name):
-        self.name=name
+        self.__name=name
+        self.__neighbors = set()
+        self.__prevNode = None
+        self.__nextNode = None
+
+    def getName(self):
+        return self.__name
     def connectNode(self,node1):
         self.nextNode=node1
         node1.prevNode=self
+    def addNeighbor(self,node1):
+        #print(self.__name, len(self.__neighbors), 'add', node1.getName(), len(node1.getNeighbors()))
+        self.__neighbors.add(node1)
+        #print(len(self.__neighbors), len(node1.getNeighbors()))
+
+    def getNeighbors(self):
+        return self.__neighbors
 
 class Graph:
     linkCount=0
 
     def addneighbor2(self,node1,node2):
-        node1.neighbor.add(node2)
-        node2.neighbor.add(node1)
+
+        #print '---before'
+        #print '----neighbors of node1:', node1.getName()
+        #for n in node1.getNeighbors():
+        #    print(n.getName())
+        #print '----neighbors of node2:', node2.getName()
+        #for n in node2.getNeighbors():
+        #    print n.getName()
+
+        #print 'add link', node1.getName(), node2.getName()
+        node1.addNeighbor(node2)
+        node2.addNeighbor(node1)
         self.linkCount=self.linkCount+1
+
+        #print len(node1.getNeighbors()), len(node2.getNeighbors())
+
+        #print '----neighbors of node1:', node1.getName()
+        #for n in node1.getNeighbors():
+        #    print(n.getName())
+        #print '----neighbors of node2:', node2.getName()
+        #for n in node2.getNeighbors():
+        #    print n.getName()
+        #print 'link and node block end'
+
+
+
 class FatTree(Graph):
-    c=[]#core switch
-    a=[]#aggregation switch
-    s=[]#edge switch
-    h=[]#host
-    '''make sure that nc%na==0'''
-    nc = 1  # total core switch
-    na = 2  # aggregation switch in one block
-    ns = 2  # edge switch in one block
-    nh = 2  # host connected to each edge switch
-    midblock={}#middle block area
+    def __init__(self):
+        self.c = []
+        self.a = []
+        self.s = []
+        self.h = []
+        '''make sure that nc%na==0'''
+        self.nc = 1  # total core switch
+        self.na = 2  # aggregation switch in one block
+        self.ns = 2  # edge switch in one block
+        self.nh = 2  # host connected to each edge switch
+        self.midblock={}#middle block area
 
     def addblock(self,anodes,snodes):
         for a in anodes:
@@ -42,51 +77,53 @@ class FatTree(Graph):
         m=self.na
         n=self.ns
 
-        for i in xrange(m):
-            a.append(node('aggregation_'+str(index+1)+'_'+str(i+1)))
-        for i in xrange(n):
-            s.append(node('edge_'+str(index+1)+'_'+str(i+1)))
-            for j in xrange(self.nh):
-                h.append(node('host_'+str(index+1)+'_'+str(i+1)+'_'+str(j+1)))
+        for i in range(m):
+            anode=node('aggregation_'+str(index+1)+'_'+str(i+1))
+            a.append(anode)
+
+        for i in range(n):
+            snode=node('edge_'+str(index+1)+'_'+str(i+1))
+            s.append(snode)
+            h=[]
+            for j in range(self.nh):
+                hnode=node('host_'+str(index+1)+'_'+str(i+1)+'_'+str(j+1))
+                h.append(hnode)
                 self.addneighbor2(s[i],h[j])
+                self.h=self.h+h
 
-
-        self.addblock(a,s)
-        self.midblock[index]=a
+        self.addblock(a, s)
+        self.midblock[index] = a
         self.a=self.a+a
         self.s=self.s+s
-        self.h=self.h+h
 
     def generateTopo(self):
 
-        c=[]
-
-        for i in xrange(self.nc):
-            c.append(node('core'+str(i+1)))
+        for i in range(self.nc):
+            self.c.append(node('core'+str(i+1)))
             self.createBlock(i)
-        for i in xrange(self.nc):
-            k=self.nc%self.na
-            for j in xrange(self.nc):
-                self.addneighbor2(c[j],self.midblock[i][k])
+
+        for i in range(self.nc):
+            k=i%self.na
+            for j in range(self.nc):
+                self.addneighbor2(self.c[j],self.midblock[i][k])
                 pass
-        self.c=c
 
 #test
 if __name__=="__main__":
     ftree=FatTree()
     ftree.generateTopo()
-    print "FatTree,linkCount=",ftree.linkCount
+    print "FatTree,linkCount=", ftree.linkCount
     #exit(0)
 
     for c in ftree.c:
-        print c.name
-        for a in c.neighbor:
-            print a.name
-    '''        
-    for a in ftree.a:
-        print a.name
-    for s in ftree.s:
-        print s.name
-    for h in ftree.h:
-        print h.name
-    '''
+        for a in c.getNeighbors():
+            #print 'neighbors of', c.getName(),'is',a.getName()
+            for s in a.getNeighbors():
+            #    print 'neighbor of ',a.getName(),'is',s.getName()
+                for h in s.getNeighbors():
+                    print 'neighbor of',s.getName(),'is',h.getName()
+                    pass
+    print "----------"
+
+
+
