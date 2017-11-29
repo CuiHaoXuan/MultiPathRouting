@@ -6,8 +6,8 @@ class node:
     def __init__(self,name):
         self.__name=name
         self.__neighbors = set()
-        self.__prevNode = None
-        self.__nextNode = None
+        self.prevNode = None
+        self.nextNode = None
 
     def getName(self):
         return self.__name
@@ -59,10 +59,10 @@ class FatTree(Graph):
         self.s = []
         self.h = []
         '''make sure that nc%na==0'''
-        self.nc = 1  # total core switch
-        self.na = 2  # aggregation switch in one block
-        self.ns = 2  # edge switch in one block
-        self.nh = 2  # host connected to each edge switch
+        self.nc = 10  # total core switch
+        self.na = 5  # aggregation switch in one block
+        self.ns = 8  # edge switch in one block
+        self.nh = 6  # host connected to each edge switch
         self.midblock={}#middle block area
 
     def addblock(self,anodes,snodes):
@@ -117,13 +117,15 @@ if __name__=="__main__":
 
     for c in ftree.c:
         for a in c.getNeighbors():
-            #print 'neighbors of', c.getName(),'is',a.getName()
+            print len(c.getNeighbors()),'neighbors of', c.getName(),'is',a.getName()
             for s in a.getNeighbors():
-            #    print 'neighbor of ',a.getName(),'is',s.getName()
+                print len(a.getNeighbors()),'neighbor of ',a.getName(),'is',s.getName()
                 for h in s.getNeighbors():
-                    print 'neighbor of',s.getName(),'is',h.getName()
+                    print len(s.getNeighbors()),'neighbor of',s.getName(),'is',h.getName()
                     pass
     print "----------"
+    for i in ftree.s:
+        print i.getName()
 
 
 
