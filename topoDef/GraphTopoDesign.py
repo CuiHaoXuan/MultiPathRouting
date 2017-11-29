@@ -1,16 +1,22 @@
 #graph topology design
 
 class node:
-    neighbor=[]
+    neighbor=set()
     name=''
+    prevNode=None
+    nextNode=None
     def __init__(self,name):
         self.name=name
+    def connectNode(self,node1):
+        self.nextNode=node1
+        node1.prevNode=self
+
 class Graph:
     linkCount=0
 
     def addneighbor2(self,node1,node2):
-        node1.neighbor.append(node2)
-        node2.neighbor.append(node1)
+        node1.neighbor.add(node2)
+        node2.neighbor.add(node1)
         self.linkCount=self.linkCount+1
 class FatTree(Graph):
     c=[]#core switch
@@ -18,8 +24,8 @@ class FatTree(Graph):
     s=[]#edge switch
     h=[]#host
     '''make sure that nc%na==0'''
-    nc = 6  # total core switch
-    na = 3  # aggregation switch in one block
+    nc = 1  # total core switch
+    na = 2  # aggregation switch in one block
     ns = 2  # edge switch in one block
     nh = 2  # host connected to each edge switch
     midblock={}#middle block area
@@ -63,7 +69,7 @@ class FatTree(Graph):
             for j in xrange(self.nc):
                 self.addneighbor2(c[j],self.midblock[i][k])
                 pass
-        self.c=self.c+c
+        self.c=c
 
 #test
 if __name__=="__main__":
@@ -71,11 +77,16 @@ if __name__=="__main__":
     ftree.generateTopo()
     print "FatTree,linkCount=",ftree.linkCount
     #exit(0)
+
     for c in ftree.c:
         print c.name
+        for a in c.neighbor:
+            print a.name
+    '''        
     for a in ftree.a:
         print a.name
     for s in ftree.s:
         print s.name
     for h in ftree.h:
         print h.name
+    '''
