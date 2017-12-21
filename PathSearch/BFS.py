@@ -1,7 +1,7 @@
-from topoDef.GraphTopoDesign import *
+from topoDef.MininetFatTreeTopo import *
 import threading
 def matchNodeInGraph(node1,node2,graph):
-    Nlist=graph.c+graph.a+graph.s+graph.h
+    Nlist=graph.AllNodes
     nodeS=None
     nodeP=None
     tag=[False,False]
@@ -17,10 +17,10 @@ def matchNodeInGraph(node1,node2,graph):
         exit(2)
     print len(nodeS.getNeighbors()),len(nodeP.getNeighbors())
     return [nodeS,nodeP]
-def BFS(nodeS,nodeP):
-    ftree = FatTree()
-    ftree.generateTopo()
-    nodeS,nodeP=matchNodeInGraph(nodeS,nodeP,ftree)
+def BFS(sN,tN,graph):
+    ftree = graph
+
+    nodeS,nodeP=matchNodeInGraph(sN,tN,ftree)
 
     openT=[]
     closeT=[]
@@ -60,7 +60,13 @@ def BFS(nodeS,nodeP):
 
 
 if __name__=="__main__":
+    graph=FatTree()
     startNode=raw_input("start node:")
     targetNode=raw_input("target node:")
     print "from",startNode,'to',targetNode
-    BFS(node(startNode),node(targetNode))
+    sN=Node()
+    tN=Node()
+    sN.name=startNode
+    tN.name=targetNode
+    BFS(sN,tN,graph)
+
