@@ -150,7 +150,7 @@ class FatTree(Topo):
     def __init__(self):
         Topo.__init__(self)
         self.coreNum = 3
-        self.aggreagationNum = 5
+        self.aggreagationNum = 2
         self.edgeNum = 2
 
         self.CoreSwitchType = OVSSwitch
