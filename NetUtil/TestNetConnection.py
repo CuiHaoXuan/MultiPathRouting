@@ -10,7 +10,7 @@ from topoDef.MininetFatTreeTopo import *
 def test():
     try:
         net=Mininet(topo=FatTree(),controller=RemoteController,ipBase='10.0.0.1/8')
-        ctr=net.addController('ODL',controller=partial(RemoteController,ip='127.0.0.1',port=6633))
+        ctr=net.addController('ODL',controller=partial(RemoteController,ip='192.168.3.179/24',port=6633))
         ctr.start()
         net.start()
 
