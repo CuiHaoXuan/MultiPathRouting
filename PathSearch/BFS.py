@@ -1,5 +1,4 @@
-from SimpleNet.topo-fattree import *
-
+from SimpleNet.topo_fattree import *
 
 def matchNodeInGraph(node1,node2,graph):
     Nlist=graph.AllNodes

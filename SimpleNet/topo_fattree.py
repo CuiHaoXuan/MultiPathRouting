@@ -24,10 +24,12 @@ class FatTree:
             server=Node()
             server.name="server"+str(i)+"_"+str(index)
             self.AllNodes.add(server)
+            self.Servers.add(server)
             print("adding server",server.name)
 
             link=Link(edgeS,server,bw=100)
             link.setlink()
+            self.AllLinks.add(link)
 
         for i in range(len(a)):
             aggS=a[i]
@@ -35,6 +37,7 @@ class FatTree:
                 edgeS=e[j]
                 link=Link(aggS,edgeS,bw=10)
                 link.setlink()
+                self.AllLinks.add(link)
 
         return a
     #fat tree builder
@@ -64,23 +67,46 @@ class FatTree:
 
                 link=Link(coreS,aggS,bw=1000)
                 link.setlink()
+                self.AllLinks.add(link)
 
-        #add an outer test Node,with quite big performance and infinite capcacity
-        #this node simulate request from outer clients to the data center
-        router=Node(pf=10000,capacity=-1)
-        router.name='outerReq'
+        self.statistics()
+
+
+
+    def addOuterReqClient(self,name='OuterReq'):
+        # add an outer test Node,with quite big performance and infinite capcacity
+        # this node simulate request from outer clients to the data center
+        router = Server(role='Sender',pf=10000, capacity=-1)
+        router.name = name
         self.AllNodes.add(router)
         for i in range(len(self.coreswitches)):
-            coreS=self.coreswitches[i]
-            link=Link(coreS,router,bw=2000)
+            coreS = self.coreswitches[i]
+            link = Link(coreS, router, bw=2000)
             link.setlink()
-        print("topo init finshed")
+            self.AllLinks.add(link)
+        self.outerReq.add(router)
 
-
+    def statistics(self):
+        servers=self.Servers
+        nodes=self.AllNodes
+        switches=nodes-servers-self.outerReq
+        print("topo init finshed with %d links and %d nodes, and %d are servers, %d are switches, %d are outerReqClients"
+              % (len(self.AllLinks), len(nodes), len(servers),len(switches),len(self.outerReq)))
     def __init__(self):
         self.coreNum = 10
         self.aggreagationNum = 10
         self.edgeNum = 5
 
         self.AllNodes=set()
+        self.AllLinks=set()
 
+        self.Servers=set()
+        self.outerReq=set()
+
+
+if __name__ == '__main__':
+    ft=FatTree()
+    ft.buildTopo()
+    ft.addOuterReqClient('outerR1')
+    ft.addOuterReqClient('outerR2')
+    ft.statistics()
