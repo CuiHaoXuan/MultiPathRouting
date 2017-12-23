@@ -57,10 +57,13 @@ class Node(threading.Thread):
         self.performance=pf
         self.working=True
         self.com=threading.Condition()
+
     def run(self):
         while self.working:
             if self.que.qsize() <= 0:
+                self.com.acquire()
                 self.com.wait()
+
             pkt=self.que.get()
             time.sleep(pkt.dataSize/self.performance)
             self.forward(pkt)
@@ -86,24 +89,11 @@ class Node(threading.Thread):
                         frd=True
                 break
         if frd==False:
-            self.drop(pkt)
+            self.getDropResponse(pkt)
             print("no matching rule found,drop package")
         pass
 
     def getDropResponse(self,pkt):
-        for ack in self.waitAck:
-            if ack.id==pkt.id and ack.seq==pkt.seq:
-                self.drop(ack)
-                self.waitAck.remove(ack)
-                break
-    def getReceivedAck(self,pkt):
-        for ack in self.waitAck:
-            if ack.id==pkt.id and ack.seq==pkt.seq:
-                self.getReceivedAck(ack)
-                self.waitAck.remove(ack)
-                break
-        pass
-    def drop(self,pkt):
         prevNode=pkt.prevHop
         drp=False
         for link in self.link:
@@ -114,19 +104,48 @@ class Node(threading.Thread):
 
             if nb.name == prevNode:
                 time.sleep(pkt.dataSize / link.bw)
-                nb.getDropResponse(pkt)
-                drp = True
+                for ack in self.waitAck:
+                    if ack.id == pkt.id and ack.seq == pkt.seq:
+                        nb.getDropResponse(ack)
+                        self.waitAck.remove(ack)
+                        drp = True
+
+                        break
                 print("drop package and host get reponse")
                 break
         if drp==False:
-            print("Inner Error, Still Drop package,But Host get no reponse.")
+            print("Inner Error, drop pkt!!!")
 
     def cacheData(self,pkt):
 
         if self.que.maxsize==self.que.qsize():
-            self.drop(pkt)
+            self.getDropResponse(pkt)
         else:
             self.que.put(pkt)
+
+
+    def getReceivedAck(self,pkt):
+        prevNode = pkt.prevHop
+        drp = False
+        for link in self.link:
+            if link.node1.name == self.name:
+                nb = link.node2
+            else:
+                nb = link.node1
+
+            if nb.name == prevNode:
+                time.sleep(pkt.dataSize / link.bw)
+                for ack in self.waitAck:
+                    if ack.id == pkt.id and ack.seq == pkt.seq:
+                        nb.getReceivedAck(ack)
+                        self.waitAck.remove(ack)
+                        drp=True
+
+                        break
+                print("ack receive package and host get reponse")
+                break
+        if drp==False:
+            print("Inner Error, ACK rcv pkt!!!")
 
     #these functions are used for seach the graph
     def getNeighbors(self):
@@ -141,11 +160,19 @@ class Node(threading.Thread):
 
 #define seaver
 class Server(Node):
-    def __init__(self,role='Sender',pf=10,capacity=-1):
+    def __init__(self,role='Sender',pf=10,capacity=-1,controller=None):
         Node.__init__(self,pf=pf,capacity=capacity)
         self.role=role
-    def prepareData(self,pktsize,totalsize,id,src,dst):
-        n=0
+        self.controller=None
+        if self.role=='Sender':
+            self.controller=controller
+
+    def reset(self):
+        self.que=Queue.Queue()
+        self.working=True
+        self.waitAck=set()
+
+    def prepareData(self,pktsize=100,totalsize=10000,id='',src='',dst=''):
         n=totalsize//pktsize
         lastpktsize=0
         if n*pktsize<totalsize:
@@ -167,17 +194,21 @@ class Server(Node):
             pkt.total = n
             self.cacheData(pkt)
 
-        pass
+
+
     def sendPkt(self,pkt):
         self.forward(pkt)
+
         pass
     def receivePkt(self,pkt):
+        self.cacheData(pkt)
         pass
     def run(self):
         if self.role=='Sender':
             while self.working:
                 if self.que.qsize() <= 0:
                     self.working=False
+                    print("sender",self.name,"finished sending all pkts")
                 pkt = self.que.get()
                 time.sleep(pkt.dataSize / self.performance)
                 self.sendPkt(pkt)
@@ -186,6 +217,7 @@ class Server(Node):
             while self.working:
                 if self.que.qsize()>=total:
                     self.working=False
+                    print("receiver",self.name,"finished receiving all pkts")
                 pkt=self.que.get()
                 time.sleep(pkt.dataSize / self.performance)
                 self.receivePkt(pkt)
@@ -203,28 +235,7 @@ class Server(Node):
             if ack.id==pkt.id and ack.seq==pkt.seq:
                 self.waitAck.remove(ack)
                 break
-#def net controller
-class Controller:
-    def __init__(self,topo):
-        self.Topo=None
-        self.ID_pool=set()
-    def begin(self):
-        nodes=self.Topo.AllNodes
-        for node in nodes:
-            node.start()
 
-    def SearchRoute(self):
-        route=[]
-
-        return route
-
-    def SetFlowRule(self,route):
-        #route is a list descibe routing from src to dst
-        pass
-    def generatePktID(self):
-        id=''
-
-        return id
 
 #net package def
 class PktData:
@@ -238,8 +249,10 @@ class PktData:
         self.total=1
         #in my expemeriment, this field is never used
         self.data=None
+
+
     def copyPktHeader(self,pkt):
-        pkt1=PktData()
+        pkt1=PktData(id=pkt.id,seq=pkt.seq,size=pkt.dataSize)
         pkt1.dataSize=pkt.dataSize
         pkt1.Src=pkt.Src
         pkt1.Dst=pkt.Dst
