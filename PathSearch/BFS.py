@@ -1,5 +1,6 @@
-from topoDef.MininetFatTreeTopo import *
-import threading
+from SimpleNet.topo-fattree import *
+
+
 def matchNodeInGraph(node1,node2,graph):
     Nlist=graph.AllNodes
     nodeS=None
@@ -36,9 +37,9 @@ def BFS(sN,tN,graph):
         #threading._sleep(1)
         for nextnode in curNode.getNeighbors():
 
-            if nextnode.getName() == nodeP.getName():
+            if nextnode.name == nodeP.name:
                 curNode.connectNode(nextnode)
-                print "found", nodeP.getName(),nextnode.getName()
+                print "found", nodeP.name,nextnode.name
                 tag=True
                 break
 

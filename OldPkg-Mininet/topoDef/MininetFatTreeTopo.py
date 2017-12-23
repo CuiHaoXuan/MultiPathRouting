@@ -1,25 +1,5 @@
-
 from mininet.node import OVSSwitch,Host
 from mininet.topo import Topo
-
-#net link def
-class Link:
-    def __init__(self):
-        self.node1=None
-        self.node2=None
-        self.link=None
-        self.port1=0
-        self.port2=0
-        self.fee=None
-
-    def setlink(self,mnlink):
-
-        self.port1 = self.node1.curPortNum
-        self.port2 = self.node2.curPortNum
-        self.link=mnlink(self.node1,self.node2,self.port1,self.port2)
-        self.node1.curPortNum=self.node1.curPortNum+1
-        self.node2.curPortNum=self.node2.curPortNum+1
-
 
 #net nodes def
 class Node:
@@ -56,7 +36,7 @@ class FatTree(Topo):
         node1.neighbors[port1]=node2
         node2.neighbors[port2]=node1
 
-        print("add link",node1.name,port1,node2.name,port2)
+        #print("add link",node1.name,port1,node2.name,port2)
         try:
             self.addLink(node1.node,node2.node,port1,port2)
         except Exception as e:
@@ -76,7 +56,7 @@ class FatTree(Topo):
             aggS.node=self.addSwitch(aggS.name,cls=self.AggregationSwitchType)
             self.AllNodes.add(aggS)
             a.append(aggS)
-            print("adding aggregation switch",aggS.name)
+            #print("adding aggregation switch",aggS.name)
 
         for i in range(self.edgeNum):
 
@@ -85,13 +65,13 @@ class FatTree(Topo):
             edgeS.node=self.addSwitch(edgeS.name,cls=self.EdgeSwitchType)
             self.AllNodes.add(edgeS)
             e.append(edgeS)
-            print("adding edge switch",edgeS.name)
+            #print("adding edge switch",edgeS.name)
 
             server=Node()
             server.name="server"+str(i)+"_"+str(index)
             server.node=self.addHost(server.name,cls=self.HostType)
             self.AllNodes.add(server)
-            print("adding server",server.name)
+            #print("adding server",server.name)
 
 
             #link.setlink(self.addLink)
@@ -112,7 +92,7 @@ class FatTree(Topo):
         self.coreswitches=[]
         self.block=[]
 
-        print("building net topo")
+        #print("building net topo")
 
 
         for i in range(self.coreNum):
@@ -123,7 +103,7 @@ class FatTree(Topo):
             self.AllNodes.add(coreS)
             self.block.append(self.createBlock(i))
             self.coreswitches.append(coreS)
-            print("adding core Switch",coreS.name)
+            #print("adding core Switch",coreS.name)
 
         for i in range(len(self.coreswitches)):
             coreS=self.coreswitches[i]
@@ -137,21 +117,21 @@ class FatTree(Topo):
 
         #add an outer test Node
         router=Node()
-        router.name='outerR'
-        router.node = self.addHost('outerR',cls=Host)
+        router.name='outerReq'
+        router.node = self.addHost('outerReq',cls=Host)
         self.AllNodes.add(router)
         for i in range(len(self.coreswitches)):
             coreS=self.coreswitches[i]
             self.Linking(router,coreS)
 
-        print("topo init finshed")
+        #print("topo init finshed")
 
 
     def __init__(self):
         Topo.__init__(self)
-        self.coreNum = 3
-        self.aggreagationNum = 2
-        self.edgeNum = 2
+        self.coreNum = 10
+        self.aggreagationNum = 10
+        self.edgeNum = 5
 
         self.CoreSwitchType = OVSSwitch
         self.AggregationSwitchType = OVSSwitch
@@ -164,19 +144,21 @@ class FatTree(Topo):
 
     #test topo
     def test1(self):
-        s1 = self.addSwitch('s1',cls=self.CoreSwitchType)
-        s2 = self.addSwitch('s2',cls=self.AggregationSwitchType)
-        s3=self.addSwitch('s3',cls=self.EdgeSwitchType)
-        h1 = self.addHost('h1',cls=self.HostType)
-        h2 = self.addHost('h2',cls=self.HostType)
-        h3=self.addHost('h3',cls=self.HostType)
-        h4=self.addHost('h4',cls=self.HostType)
-        self.addLink(h1, s1,1,1)
-        self.addLink(s1, s2,2,1)
-        self.addLink(s2,s3,2,1)
-        self.addLink(h2, s3,1,2)
-        self.addLink(s1,h3,3,1)
-        self.addLink(s2,h4,3,1)
+        c=[]
+        a=[]
+        e=[]
+        h=[]
+        for i in range(1):
+            c.append(self.addSwitch('core'+str(i)))
+            for j in range(2):
+                a.append(self.addSwitch('agg'+str(j)+"_"+str(i)))
+                self.addLink(c[i],a[len(a)-1])
+                e.append(self.addSwitch('edge'+str(j)+"_"+str(i)))
+                self.addLink(a[len(a)-1],e[len(e)-1])
+                h.append(self.addHost('h'+str(len(h))))
+                self.addLink(e[len(e)-1],h[len(h)-1])
+
+
 
 topos={'FT':(lambda :FatTree())}
 
