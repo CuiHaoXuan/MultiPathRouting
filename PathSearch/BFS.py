@@ -6,10 +6,10 @@ def matchNodeInGraph(node1,node2,graph):
     nodeP=None
     tag=[False,False]
     for node in Nlist:
-        if False==tag[0] and node.name==node1.name:
+        if False==tag[0] and node.name==node1:
             nodeS=node
             tag[0]=True
-        if False==tag[1] and node.name==node2.name:
+        if False==tag[1] and node.name==node2:
             nodeP=node
             tag[1]=True
     if False in tag:
@@ -17,6 +17,7 @@ def matchNodeInGraph(node1,node2,graph):
         exit(2)
     print len(nodeS.getNeighbors()),len(nodeP.getNeighbors())
     return [nodeS,nodeP]
+
 def BFS(sN,tN,graph):
     ftree = graph
 
@@ -51,12 +52,12 @@ def BFS(sN,tN,graph):
     if tag==False:
         print("not connected? Inner Error")
         exit(1)
-    print 'path from',nodeP.name
+    #print 'path from',nodeP.name
     curNode=nodeP
     route=[]
     route.insert(0,curNode.name)
     while curNode.prevNode is not None:
-        print curNode.name
+        #print curNode.name
         curNode=curNode.prevNode
         route.insert(0,curNode.name)
     print curNode.name

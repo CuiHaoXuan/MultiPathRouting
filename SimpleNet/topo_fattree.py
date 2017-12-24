@@ -21,7 +21,7 @@ class FatTree:
             e.append(edgeS)
             print("adding edge switch",edgeS.name)
 
-            server=Node()
+            server=Server(role='Receiver')
             server.name="server"+str(i)+"_"+str(index)
             self.AllNodes.add(server)
             self.Servers.add(server)
@@ -94,7 +94,7 @@ class FatTree:
               % (len(self.AllLinks), len(nodes), len(servers),len(switches),len(self.outerReq)))
     def __init__(self):
         self.coreNum = 10
-        self.aggreagationNum = 10
+        self.aggreagationNum = 8
         self.edgeNum = 5
 
         self.AllNodes=set()
