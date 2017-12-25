@@ -87,6 +87,7 @@ class Node(threading.Thread):
 
         self.ForwardingTable=set()
         self.performance=pf
+        self.capacity=capacity
         self.working=True
         self.com=threading.Condition()
 
@@ -98,29 +99,36 @@ class Node(threading.Thread):
 
         while self.working:
             if self.que.qsize() <= 0:
-                com.acquire()
-                print(self.name, "is waiting due to que size=0")
-                com.release()
+                #com.acquire()
+                #print(self.name, "is waiting due to que size=0")
+                #com.release()
 
                 self.com.acquire()
                 self.com.wait()
 
-                com.acquire()
-                print(self.name, "wake up")
-                com.release()
+                #com.acquire()
+                #print(self.name, "wake up")
+                #com.release()
 
             pkt=self.que.get()
             time.sleep(pkt.dataSize/self.performance)
             self.forward(pkt)
-
+    def cachaeSize(self):
+        sum=0
+        for pkt in self.que.queue:
+            sum=sum+pkt.dataSize
+        return sum
     def cacheData(self,pkt):
 
-        if self.que.maxsize==self.que.qsize():
+        if self.capacity>0 and self.capacity<=self.cachaeSize():
+            com.acquire()
+            print(self.name, "cachaed full(%d),drop pkt ----------->"%(self.cachaeSize()), pkt.id, pkt.seq, pkt.total)
+            com.release()
             self.getDropResponse(pkt)
         else:
-            com.acquire()
-            print(self.name, "cachaed data", pkt.id, pkt.seq, pkt.total, "into que")
-            com.release()
+            #com.acquire()
+            #print(self.name, "cachaed data", pkt.id, pkt.seq, pkt.total, "into que")
+            #com.release()
 
             self.com.acquire()
             tag=True
@@ -161,23 +169,27 @@ class Node(threading.Thread):
                 break
         if frd==False:
             self.getDropResponse(pkt)
-            com.acquire()
-            print("no matching rule found,drop package")
-            com.release()
+            #com.acquire()
+            #print("no matching rule found,drop package")
+            #com.release()
         pass
 
     def getDropResponse(self,pkt):
         drp = False
         rm = None
+        self.com.acquire()
         for ack in self.waitAck:
 
             if ack.id == pkt.id and ack.seq == pkt.seq:
                 drp = True
                 rm = ack
                 break
-
+        self.com.release()
         if drp:
+            self.com.acquire()
             self.waitAck.remove(rm)
+            self.com.release()
+
             com.acquire()
             print(self.name, "drop receive package", pkt.id, pkt.seq, pkt.total, "and host get reponse")
             com.release()
@@ -193,7 +205,7 @@ class Node(threading.Thread):
                 if nb.name == prevNode:
                     time.sleep(pkt.dataSize / link.bw)
 
-                    nb.getReceivedAck(rm)
+                    nb.getDropResponse(rm)
 
                     break
 
@@ -205,18 +217,24 @@ class Node(threading.Thread):
     def getReceivedAck(self,pkt):
         drp=False
         rm=None
+
+        self.com.acquire()
         for ack in self.waitAck:
             #print("test",ack,pkt)
             if ack.id == pkt.id and ack.seq == pkt.seq:
                 drp = True
                 rm = ack
                 break
+        self.com.release()
 
         if drp:
+            self.com.acquire()
             self.waitAck.remove(rm)
-            com.acquire()
-            print(self.name, "ack receive package", pkt.id, pkt.seq, pkt.total, "and host get reponse")
-            com.release()
+            self.com.release()
+
+            #com.acquire()
+            #print(self.name, "ack receive package", pkt.id, pkt.seq, pkt.total, "and host get reponse")
+            #com.release()
 
             prevNode=rm.prevHop
 
@@ -322,7 +340,7 @@ class Server(Node):
 
                 break
         if len(finishList)>0:
-            with open("../RunLogs/pktTimeLog.txt","a") as f:
+            with open("../RunLogs/pktTimeLog-"+self.name+".txt","a") as f:
                 f.write("===============================\n")
                 for k in finishList:
                     f.write(k+"\n")
@@ -340,9 +358,9 @@ class Server(Node):
         self.forward(pkt)
         self.sendDict[pkt.id].remove(pkt)
 
-        com.acquire()
-        print(self.name,"send pkt",pkt.id,pkt.seq,pkt.total)
-        com.release()
+        #com.acquire()
+        #print(self.name,"send pkt",pkt.id,pkt.seq,pkt.total)
+        #com.release()
 
     def receivePkt(self,pkt):
         pkt.rcvtime=time.time()
@@ -353,9 +371,9 @@ class Server(Node):
 
         self.getReceivedAck(pkt)
 
-        com.acquire()
-        print(self.name,"receive pkt",pkt.id,pkt.seq,pkt.total)
-        com.release()
+        #com.acquire()
+        #print(self.name,"receive pkt",pkt.id,pkt.seq,pkt.total)
+        #com.release()
 
     def run(self):
 
@@ -365,17 +383,17 @@ class Server(Node):
             com.release()
             while self.working:
                 if self.que.qsize() <= 0:
-                    com.acquire()
-                    print("sender", self.name, "finished sending all pkts in current cache,now waiting")
-                    com.release()
+                    #com.acquire()
+                    #print("sender", self.name, "finished sending all pkts in current cache,now waiting")
+                    #com.release()
 
                     self.com.acquire()
 
                     self.com.wait()
-
-                    com.acquire()
-                    print(self.name, "wake up")
-                    com.release()
+                    self.com.release()
+                    #com.acquire()
+                    #print(self.name, "wake up")
+                    #com.release()
 
                 pkt = self.que.get()
                 time.sleep(pkt.dataSize / self.performance)
@@ -397,17 +415,17 @@ class Server(Node):
             count=0
             while self.working:
                 if self.que.qsize()<=0:
-                    com.acquire()
-                    print("receiver", self.name, "finished receiving all pkts in cache,now waiting")
-                    com.release()
+                    #com.acquire()
+                    #print("receiver", self.name, "finished receiving all pkts in cache,now waiting")
+                    #com.release()
 
                     self.com.acquire()
 
                     self.com.wait()
-
-                    com.acquire()
-                    print(self.name,"wake up")
-                    com.release()
+                    self.com.release()
+                    #com.acquire()
+                    #print(self.name,"wake up")
+                    #com.release()
 
                 pkt=self.que.get()
                 time.sleep(pkt.dataSize / self.performance)
@@ -433,32 +451,38 @@ class Server(Node):
             return
 
         rm=None
+        self.com.acquire()
         for ack in self.waitAck:
             if ack.id==pkt.id and ack.seq==pkt.seq:
                 rm=ack
                 break
+        self.waitAck.remove(rm)
+        self.com.release()
+        self.forward(rm)
+
         com.acquire()
         print("sender",self.name,"caught drop and resend",pkt.id,pkt.seq,pkt.total)
         com.release()
-        self.waitAck.remove(rm)
-        self.forward(rm)
+
 
     def getReceivedAck(self,pkt):
         if self.role=='Receiver':
             super(Server, self).getReceivedAck(pkt=pkt)
 
             return
-
+        self.com.acquire()
         rm=None
         for ack in self.waitAck:
             if ack.id==pkt.id and ack.seq==pkt.seq:
                 rm=ack
                 break
-        com.acquire()
-        print("sender",self.name,"Ack received",pkt.id,pkt.seq,pkt.total)
-        com.release()
         self.waitAck.remove(rm)
-        with open("../RunLogs/pktLostLog.txt","a") as f:
+        self.com.release()
+
+        #com.acquire()
+        #print("sender",self.name,"Ack received",pkt.id,pkt.seq,pkt.total)
+        #com.release()
+        with open("../RunLogs/pktLostLog-"+self.name+".txt","a") as f:
             s=pkt.id+","+str(pkt.seq)+","+str(pkt.total)+"\n"
             f.write(s)
 

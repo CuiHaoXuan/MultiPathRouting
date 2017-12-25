@@ -39,7 +39,7 @@ class Controller:
             curNode=self.getNodeByName(node)
             rm=None
             for rule in curNode.ForwardingTable:
-                if rule.id==id:
+                if rule.dataID==id:
                     rm=rule
                     break
             if rm is not None:
@@ -73,6 +73,7 @@ class Controller:
         self.route.pop(rm)
 
 if __name__ == '__main__':
+
     ft = FatTree()
     ft.buildTopo()
     ft.addOuterReqClient('outerR1')
@@ -95,10 +96,33 @@ if __name__ == '__main__':
     sN=ctr.getNodeByName(startNode)
     tN=ctr.getNodeByName(targetNode)
 
-    sN.prepareData(pktsize=100,totalsize=2000,dst=tN.name)
+    sN.prepareData(pktsize=20,totalsize=200,dst=tN.name)
 
     for id in ctr.route.keys():
         ctr.SetFlowRule(ctr.route[id],id)
     ctr.begin()
     sN.start()
+    outers=['zzy','liu','yu','wen','dotty']
+    servers=['server0_0','server3_9','server2_5','server3_8','server1_7']
+    for i in range(5):
+        print("==========================================")
+        com.acquire()
+        outerR= outers[i]
+        outerR=ctr.Topo.addOuterReqClient(outerR)
+        outerR.controller=ctr
+
+        server=ctr.getNodeByName(servers[i])
+        outerR.prepareData(pktsize=5,totalsize=100,dst=server.name)
+
+
+        for id in ctr.route.keys():
+            ctr.SetFlowRule(ctr.route[id],id)
+
+
+        outerR.start()
+        com.release()
+        time.sleep(random.randint(0,3))
+
+
+
 

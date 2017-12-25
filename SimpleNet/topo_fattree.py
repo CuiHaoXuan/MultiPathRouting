@@ -7,7 +7,7 @@ class FatTree:
         a=[]
         e=[]
         for i in range(self.aggreagationNum):
-            aggS=Node()
+            aggS=Node(pf=300,capacity=800)
             aggS.name="a"+str(i)+"_"+str(index)
             self.AllNodes.add(aggS)
             a.append(aggS)
@@ -15,7 +15,7 @@ class FatTree:
 
         for i in range(self.edgeNum):
 
-            edgeS=Node()
+            edgeS=Node(pf=600,capacity=1000)
             edgeS.name="e"+str(i)+"_"+str(index)
             self.AllNodes.add(edgeS)
             e.append(edgeS)
@@ -85,6 +85,7 @@ class FatTree:
             link.setlink()
             self.AllLinks.add(link)
         self.outerReq.add(router)
+        return router
 
     def statistics(self):
         servers=self.Servers
