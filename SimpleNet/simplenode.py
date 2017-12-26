@@ -105,7 +105,6 @@ class Node(threading.Thread):
 
                 self.com.acquire()
                 self.com.wait()
-
                 #com.acquire()
                 #print(self.name, "wake up")
                 #com.release()

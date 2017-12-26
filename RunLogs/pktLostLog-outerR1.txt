@@ -8,3 +8,13 @@ AMJC2E1D,7,10
 AMJC2E1D,8,10
 AMJC2E1D,9,10
 AMJC2E1D,10,10
+XLraygxB,1,10
+XLraygxB,2,10
+XLraygxB,3,10
+XLraygxB,4,10
+XLraygxB,5,10
+XLraygxB,6,10
+XLraygxB,7,10
+XLraygxB,8,10
+XLraygxB,9,10
+XLraygxB,10,10

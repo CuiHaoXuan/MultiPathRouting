@@ -3,12 +3,14 @@ import random
 import string
 from simplenode import *
 from topo_fattree import *
-from PathSearch.BFS import *
-
+from PathSearch.BFS import BFS
+from PathSearch.EDCS import EDCS
 class Controller:
     def __init__(self,topo):
         self.Topo=topo
         self.route={}
+
+        self.searchMthod=None
 
         for server in self.Topo.Servers:
             server.controller=self
@@ -22,7 +24,7 @@ class Controller:
             node.start()
 
     def SearchRoute(self,sN,tN):
-        route=BFS(sN,tN,self.Topo)
+        route=self.searchMthod(sN,tN,self.Topo)
         print("path from",sN,"to",tN)
         for i in range(len(route)):
             print(route[i])
@@ -80,6 +82,7 @@ if __name__ == '__main__':
     ft.addOuterReqClient('outerR2')
     ft.statistics()
     ctr=Controller(ft)
+    ctr.searchMthod=EDCS
     '''
     for i in xrange(10):
         ctr.generatePktID()
